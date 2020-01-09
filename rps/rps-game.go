@@ -1,0 +1,9 @@
+package rps
+
+type RPSGame interface {
+	GetVerdict(player1 RPSChoice, player2 RPSChoice) RPSVerdict
+}
+
+type RPSVerdict int32
+
+type RPSChoice int32
