@@ -11,44 +11,10 @@ type RPSPlayer struct {
 	game rps.RPSGame
 }
 
-func CreateNewGame() *RPSPlayer {
-	return &RPSPlayer{}
+func CreateNewGame(game rps.RPSGame) *RPSPlayer {
+	return &RPSPlayer{game}
 }
 
-
-var (
-	choices                      = []string{"rock", "paper", "scissors"}
-	running                      bool
-	player1choice, player2choice string
-)
-
-func randomAnswer() string {
-	return choices[rand.Intn(len(choices))]
-}
-
-func isValid(choice string) bool {
-	for _, c := range choices {
-		if choice == c {
-			return true
-		}
-	}
-	return false
-}
-
-func choiceCompare(choice1, choice2 string) string {
-	switch {
-	case !isValid(choice1):
-		return "Player one's choice was not valid!"
-	case !isValid(choice2):
-		return "Player two's choice was not valid!"
-	case choice1 == choice2:
-		return "There was a tie!"
-	case (choice1 == "rock" && choice2 == "scissors") || (choice1 == "paper" && choice2 == "rock") || (choice1 == "scissors" && choice2 == "paper"):
-		return "Player one wins!"
-	default:
-		return "Player two wins!"
-	}
-}
 func playAgain() bool {
 	fmt.Println("Would you like to play again? (y/n)")
 
@@ -66,35 +32,91 @@ func playAgain() bool {
 	}
 }
 
+func getComputerChoice(index int) (rps.RPSChoice, error) {
+	choice := rps.RPSChoice(rand.Uint32()%3)
+	fmt.Printf("Computer%v choice: %v \n", index, choice)
+	return choice, nil
+}
+
+func getPlayerChoice(index int) (rps.RPSChoice, error) {
+	var playerChoice rps.RPSChoice
+	fmt.Printf("\nPlayer%v choice: ", index)
+	_, err := fmt.Scanf("%s", &playerChoice)
+	return playerChoice, err
+}
+
+func getChoices(players int) ([]rps.RPSChoice, error) {
+	fmt.Print("\nChoices: rock[1], paper[2], scissors[3] \n")
+	choicesFunc := []func(int)(rps.RPSChoice, error){getComputerChoice, getComputerChoice}
+	for i := 0; i < players; i++ {
+		choicesFunc[i] = getPlayerChoice
+	}
+
+	choicesVal := make([]rps.RPSChoice, len(choicesFunc))
+	var err error
+	for index, choice := range choicesFunc {
+		choicesVal[index], err = choice(index)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return choicesVal, nil
+}
+
+func generatePlayerNames(numPlayers int) []string{
+	var playerNames []string
+	switch numPlayers {
+	case 0:
+		playerNames = []string{"computer1", "computer2"}
+	case 1:
+		playerNames = []string{"player", "computer"}
+	default:
+		playerNames = []string{"player1", "player2"}
+	}
+
+	return playerNames
+}
+
+func displayVerdict(playerNames []string, verdict rps.RPSVerdict) {
+	if verdict == rps.Draw {
+		fmt.Println("\nIt's a draw. \n")
+		return
+	}
+
+	if verdict == rps.Win {
+		fmt.Printf("%v wins.\n", playerNames[0])
+		return
+	}
+
+	fmt.Printf("%v wins. \n", playerNames[1])
+}
+
 func (player *RPSPlayer) Play() {
-	running = true
-	for running == true {
-		fmt.Println("Would you like to play with 0, 1, or 2 players?")
 
-		var players string
-		fmt.Scanf("%s", &players)
-		if players == "1" || players == "2" {
-			fmt.Println("What is your choice? (rock, paper, or scissors)")
-			fmt.Scanf("%s", &player1choice)
-		} else {
-			fmt.Println("The player 1 computer is choosing...")
-			player1choice = randomAnswer()
+	fmt.Println("Would you like to play with 0, 1, or 2 players?")
+	var players int
+	_, err := fmt.Scanf("%d", &players)
+	if err != nil {
+		fmt.Println("Fail to ")
+	}
+
+	if players > 2 || players < 0 {
+		fmt.Println("Invalid argument.")
+		return
+	}
+
+	for true {
+		playerNames := generatePlayerNames(players)
+		choices, _ := getChoices(players)
+
+		verdict, _ := player.game.GetVerdict(choices[0], choices[1])
+		displayVerdict(playerNames, verdict)
+
+		if !playAgain() {
+			fmt.Println("Goodbye!!!")
+			break
 		}
-		if players == "2" {
-			fmt.Println("what is your opponents choice?")
-			fmt.Scanf("%s", &player2choice)
-		} else {
-			fmt.Println("The player 2 computer is choosing...")
-			player2choice = randomAnswer()
-		}
-		player1choice = strings.ToLower(player1choice)
-		player2choice = strings.ToLower(player2choice)
-
-		fmt.Println(choiceCompare(player1choice, player2choice))
-		fmt.Println("Player 1 chose ", player1choice)
-		fmt.Println("Player 2 chose ", player2choice)
-
-		running = playAgain()
 	}
 }
 

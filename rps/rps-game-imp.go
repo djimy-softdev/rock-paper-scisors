@@ -27,12 +27,22 @@ var choices = []RPSChoice{
 	scisor,
 }
 
-func (d *RPSGameImp) GetVerdict(player1Choice RPSChoice, player2Choice RPSChoice) (error, RPSVerdict) {
+/*
+ * Returns the verdict of the game for player1
+ * Possible verdicts: Win, Lose, Draw
+ */
+func (d *RPSGameImp) GetVerdict(player1Choice RPSChoice, player2Choice RPSChoice) (RPSVerdict, error) {
 	if player1Choice >= RPSChoice(len(choices)) || player2Choice >= RPSChoice(len(choices)) {
-		return errors.New("WRONG ARGUMENT"), 0
+		return Lose, errors.New("WRONG ARGUMENT")
 	}
 
-	verdict =
+	if player1Choice == player2Choice {
+		return Draw, nil
+	}
 
-	return Draw
+	if (player1Choice + 1) % 3 == player2Choice {
+		return Lose, nil
+	}
+
+	return Win, nil
 }
