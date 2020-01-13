@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"rock-paper-scisors/rps"
+	"strconv"
 	"strings"
 )
 
@@ -11,54 +12,73 @@ type RPSPlayer struct {
 	game rps.RPSGame
 }
 
+/*
+ * Params: an implementation of a "rock paper scissor" (rps) game
+ * Returns a rps game player object
+ */
 func CreateNewGame(game rps.RPSGame) *RPSPlayer {
 	return &RPSPlayer{game}
 }
 
-func playAgain() bool {
-	fmt.Println("Would you like to play again? (y/n)")
+func playAgain() (bool, error) {
+	fmt.Print("\nWould you like to play again? (y/n)")
 
 	var again string
-	fmt.Scanf("%s", &again)
+	_, err := fmt.Scanf("%s", &again)
+	if err != nil {
+		return false, err
+	}
+
 	again = strings.ToLower(again)
 
 	if again == "y" {
-		return true
-	} else if again == "n" {
-		return false
-	} else {
-		fmt.Println("That's an invalid response!")
-		return playAgain()
+		return true, nil
 	}
+
+	return false, nil
 }
 
-func getComputerChoice(index int) (rps.RPSChoice, error) {
+func getComputerChoice(name string, validator func(choice rps.RPSChoice)bool) rps.RPSChoice {
 	choice := rps.RPSChoice(rand.Uint32()%3)
-	fmt.Printf("Computer%v choice: %v \n", index, choice)
-	return choice, nil
+	fmt.Printf("%v's choice: %v\n", name, choice)
+	return choice
 }
 
-func getPlayerChoice(index int) (rps.RPSChoice, error) {
-	var playerChoice rps.RPSChoice
-	fmt.Printf("\nPlayer%v choice: ", index)
-	_, err := fmt.Scanf("%s", &playerChoice)
-	return playerChoice, err
+func getPlayerChoice(name string, validator func(choice rps.RPSChoice)bool) rps.RPSChoice {
+	var playerChoice string
+	var choice rps.RPSChoice
+
+	for true {
+		fmt.Printf("%v's choice: ", name)
+		_, err := fmt.Scanf("%s", &playerChoice)
+		if err != nil {
+			fmt.Println("Wrong input!")
+			continue
+		}
+
+		a, err := strconv.Atoi(playerChoice)
+		if choice = rps.RPSChoice(a); err != nil || !validator(choice) {
+			fmt.Println("Wrong input!")
+			continue
+		}
+
+		break
+	}
+
+	return choice
 }
 
-func getChoices(players int) ([]rps.RPSChoice, error) {
+func getChoices(players int, playerNames []string, validator func(choice rps.RPSChoice)bool) ([]rps.RPSChoice, error) {
 	fmt.Print("\nChoices: rock[1], paper[2], scissors[3] \n")
-	choicesFunc := []func(int)(rps.RPSChoice, error){getComputerChoice, getComputerChoice}
+	choicesFunc := []func(string, func(choice rps.RPSChoice)bool)rps.RPSChoice{getComputerChoice, getComputerChoice}
 	for i := 0; i < players; i++ {
 		choicesFunc[i] = getPlayerChoice
 	}
 
 	choicesVal := make([]rps.RPSChoice, len(choicesFunc))
-	var err error
 	for index, choice := range choicesFunc {
-		choicesVal[index], err = choice(index)
-		if err != nil {
-			return nil, err
-		}
+		val := choice(playerNames[index], validator)
+		choicesVal[index] = val
 	}
 
 	return choicesVal, nil
@@ -80,7 +100,7 @@ func generatePlayerNames(numPlayers int) []string{
 
 func displayVerdict(playerNames []string, verdict rps.RPSVerdict) {
 	if verdict == rps.Draw {
-		fmt.Println("\nIt's a draw. \n")
+		fmt.Println("It's a draw.")
 		return
 	}
 
@@ -92,6 +112,9 @@ func displayVerdict(playerNames []string, verdict rps.RPSVerdict) {
 	fmt.Printf("%v wins. \n", playerNames[1])
 }
 
+/*
+ * The entry point of the game, this function will start the game
+ */
 func (player *RPSPlayer) Play() {
 
 	fmt.Println("Would you like to play with 0, 1, or 2 players?")
@@ -108,12 +131,22 @@ func (player *RPSPlayer) Play() {
 
 	for true {
 		playerNames := generatePlayerNames(players)
-		choices, _ := getChoices(players)
+		choices, err := getChoices(players, playerNames, player.game.ValidateChoice)
+
+		for err != nil {
+			fmt.Printf("Wrong input!\n")
+			break
+		}
 
 		verdict, _ := player.game.GetVerdict(choices[0], choices[1])
 		displayVerdict(playerNames, verdict)
 
-		if !playAgain() {
+		keepOn, err := playAgain()
+		if err != nil {
+			fmt.Println("Fail to read input!")
+		}
+
+		if !keepOn {
 			fmt.Println("Goodbye!!!")
 			break
 		}

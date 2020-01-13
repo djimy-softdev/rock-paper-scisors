@@ -17,6 +17,5 @@ func main() {
 
 	player.Play()
 
-	fmt.Println("Thanks for playing Rock Paper Scissors, by ParrotCaws")
-	fmt.Println("Fork me on github! github.com/ParrotCaws")
+	fmt.Println("\nThanks for playing Rock Paper Scissors.")
 }

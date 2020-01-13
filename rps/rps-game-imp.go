@@ -1,6 +1,8 @@
 package rps
 
-import "errors"
+import (
+	"errors"
+)
 
 type RPSGameImp struct {
 }
@@ -45,4 +47,16 @@ func (d *RPSGameImp) GetVerdict(player1Choice RPSChoice, player2Choice RPSChoice
 	}
 
 	return Win, nil
+}
+
+/*
+ * Returns whether or not the player's choice is valid
+ * Possible values: true, false
+ */
+func (d *RPSGameImp) ValidateChoice(playerChoice RPSChoice) bool {
+	if int(playerChoice) >= len(choices) {
+		return false
+	}
+
+	return true
 }
