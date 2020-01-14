@@ -121,7 +121,8 @@ func (player *RPSPlayer) Play() {
 	var players int
 	_, err := fmt.Scanf("%d", &players)
 	if err != nil {
-		fmt.Println("Fail to ")
+		fmt.Println("Fail to read input")
+		return
 	}
 
 	if players > 2 || players < 0 {
@@ -152,5 +153,3 @@ func (player *RPSPlayer) Play() {
 		}
 	}
 }
-
-
