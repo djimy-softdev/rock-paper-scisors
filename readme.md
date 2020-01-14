@@ -5,7 +5,9 @@
   - docker (with sudo privileges)
 
 ### How to start the game
-Run the following commands to play the game:
+* Unzip the file
+* Enter the directory rock-paper-scisors
+* Run the following commands to play the game:
 ```sh
 $ make build 
 $ make play
